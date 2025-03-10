@@ -1,0 +1,67 @@
+---
+title: "Weight Lifting Exercise Prediction"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Introduction
+
+With the rise of wearable devices like Fitbit, Apple Watch, and others, tracking physical activity has become easier. This project aims to use machine learning to classify the quality of barbell lifts performed by different individuals.
+
+# Data Preprocessing
+
+```{r setup, message=FALSE, warning=FALSE}
+library(caret)
+library(randomForest)
+library(ggplot2)
+library(dplyr)
+
+# Load Data
+train_data <- read.csv("/mnt/data/pml-training.csv")
+test_data <- read.csv("/mnt/data/pml-testing.csv")
+
+# Remove near-zero variance predictors
+nzv <- nearZeroVar(train_data)
+train_data <- train_data[, -nzv]
+test_data <- test_data[, -nzv]
+
+# Remove columns with NA values
+train_data <- train_data[, colSums(is.na(train_data)) == 0]
+test_data <- test_data[, colSums(is.na(test_data)) == 0]
+
+# Remove irrelevant columns (e.g., ID and timestamps)
+train_data <- train_data[, -(1:7)]
+test_data <- test_data[, -(1:7)]
+
+# Convert target variable to factor
+train_data$classe <- as.factor(train_data$classe)
+```
+
+# Model Training
+
+```{r model-training}
+set.seed(1234)
+model_rf <- train(classe ~ ., data = train_data, method = "rf", trControl = trainControl(method = "cv", number = 5))
+print(model_rf)
+```
+
+# Model Evaluation
+
+```{r evaluation}
+# Accuracy on training set
+train_pred <- predict(model_rf, train_data)
+conf_matrix <- confusionMatrix(train_pred, train_data$classe)
+print(conf_matrix)
+```
+
+# Prediction on Test Data
+
+```{r prediction}
+test_pred <- predict(model_rf, test_data)
+test_pred
+```
+
+# Conclusion
+
+We successfully trained a **Random Forest** model to classify barbell lifts. The model achieved high accuracy and can be used for real-world applications.
